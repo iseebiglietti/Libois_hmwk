@@ -8,69 +8,131 @@ library(haven)
 library(dplyr)
 library(lmtest)
 library(sandwich)
+library(stargazer)
 
 #### Code ####
-# Import data 1
+# Import datas
 data1 <- read_dta("Datas/table1-soil-climate.dta")
-
-# Summary if `op == 1`
-summary(data1 %>% filter(op == 1) %>% 
-          select(lon, lat, alt, rain, soilblack, soilalkaline, 
-                 soilalluvialriver, soilred, aquifermorethan150, 
-                 aquifer100and150, phstrongalkali, phslightalkali, 
-                 phneutral, phslightacid, topsoil25and50cm, topsoil50and100cm, 
-                 topsoilmorethan300cm))
-
-# Summary if `op == 0`
-summary(data1 %>% filter(op == 0) %>% 
-          select(lon, lat, alt, rain, soilblack, soilalkaline, 
-                 soilalluvialriver, soilred, aquifermorethan150, 
-                 aquifer100and150, phstrongalkali, phslightalkali, 
-                 phneutral, phslightacid, topsoil25and50cm, topsoil50and100cm, 
-                 topsoilmorethan300cm))
-
-# Regressions with robust standard errors
-vars1 <- c("lon", "lat", "alt", "rain", "soilblack", "soilalkaline", 
-           "soilalluvialriver", "soilred", "aquifermorethan150", 
-           "aquifer100and150", "phstrongalkali", "phslightalkali", 
-           "phneutral", "phslightacid", "topsoil25and50cm", 
-           "topsoil50and100cm", "topsoilmorethan300cm")
-
-for (var in vars1) {
-  model <- lm(as.formula(paste(var, "~ op")), data = data1)
-  coeftest(model, vcov = vcovHC(model, type = "HC1"))
-}
-
-# Clear
-rm()
-
-
-
-
-# Import data 2
 data2 <- read_dta("Datas/table1-population-and-census.dta")
 
-# Summary if `op == 1`
-summary(data2 %>% filter(op == 1) %>% 
-          select(poverty, literacyrate, populationsize, populationdensity, 
-                 fractionsc, permanenthouse, pervilelec, pervilroad, 
-                 pervilhealth, pervilschool, ger))
+# Define the variables for data1
+vars1 <- c("lon", "lat", "alt", "rain", "soilblack", "soilalkaline", 
+                      "soilalluvialriver", "soilred", "aquifermorethan150", 
+                      "aquifer100and150", "phstrongalkali", "phslightalkali", 
+                      "phneutral", "phslightacid", "topsoil25and50cm", 
+                      "topsoil50and100cm", "topsoilmorethan300cm")
 
-# Summary if `op == 0`
-summary(data2 %>% filter(op == 0) %>% 
-          select(poverty, literacyrate, populationsize, populationdensity, 
-                 fractionsc, permanenthouse, pervilelec, pervilroad, 
-                 pervilhealth, pervilschool, ger))
-
-# Regressions with robust standard errors
+# Define the variables for data2
 vars2 <- c("poverty", "literacyrate", "populationsize", "populationdensity", 
-           "fractionsc", "pervilelec", "pervilroad", "pervilhealth", 
-           "pervilschool", "permanenthouse", "ger")
+                      "fractionsc", "permanenthouse", "pervilelec", 
+                      "pervilroad", "pervilhealth", "pervilschool", "ger")
 
-for (var in vars2) {
-  model <- lm(as.formula(paste(var, "~ op")), data = data2)
-  coeftest(model, vcov = vcovHC(model, type = "HC1"))
+# Calculate means for data1 and data2 where op == 1
+means_data1_1 <- data1 %>%
+  filter(op == 1) %>%
+  select(all_of(vars1)) %>%
+  summarise(across(everything(), mean, na.rm = TRUE)) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Mean") %>%
+  mutate(Group = "Data1 (op = 1)")
+
+means_data2_1 <- data2 %>%
+  filter(op == 1) %>%
+  select(all_of(vars2)) %>%
+  summarise(across(everything(), mean, na.rm = TRUE)) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Mean") %>%
+  mutate(Group = "Data2 (op = 1)")
+
+# Combine the results into one data frame
+combined_means_1 <- bind_rows(means_data1_1, means_data2_1)
+
+# Drop the Group column
+combined_means_1 <- combined_means_1 %>%
+  select(-Group) %>%
+  mutate(Mean = round(Mean, 2))
+
+# View the combined means
+print(combined_means_1)
+
+# Calculate means for data1 and data2 where op == 1
+means_data1_0 <- data1 %>%
+  filter(op == 0) %>%
+  select(all_of(vars1)) %>%
+  summarise(across(everything(), mean, na.rm = TRUE)) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Mean") %>%
+  mutate(Group = "Data1 (op = 0)")
+
+means_data2_0 <- data2 %>%
+  filter(op == 0) %>%
+  select(all_of(vars2)) %>%
+  summarise(across(everything(), mean, na.rm = TRUE)) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Mean") %>%
+  mutate(Group = "Data2 (op = 0)")
+
+# Combine the results into one data frame
+combined_means_0 <- bind_rows(means_data1_0, means_data2_0)
+
+# Drop the Group column
+combined_means_0 <- combined_means_0 %>%
+  select(-Group) %>%
+  mutate(Mean = round(Mean, 2))
+
+# View the combined means
+print(combined_means_0)
+
+# Initialize lists to store results
+results <- list()
+
+# Fit models for vars1
+for (var in vars1) {
+  model <- lm(as.formula(paste(var, "~ op")), data = data1)
+  robust_result <- coeftest(model, vcov = vcovHC(model, type = "HC1"))
+  
+  # Store the coefficient and its robust standard error
+  results[[var]] <- data.frame(Variable = var,
+                                Coefficient = robust_result[2, 1],  # op coefficient
+                                Robust_SE = robust_result[2, 2])     # op robust SE
 }
 
-# Clear
-rm()
+# Combine results for vars1
+results_data1 <- do.call(rbind, results)
+
+# Initialize lists to store results for vars2
+results <- list()
+
+# Fit models for vars2
+for (var in vars2) {
+  model <- lm(as.formula(paste(var, "~ op")), data = data2)
+  robust_result <- coeftest(model, vcov = vcovHC(model, type = "HC1"))
+  
+  # Store the coefficient and its robust standard error
+  results[[var]] <- data.frame(Variable = var,
+                                Coefficient = robust_result[2, 1],  # op coefficient
+                                Robust_SE = robust_result[2, 2])     # op robust SE
+}
+
+# Combine results for vars2
+results_data2 <- do.call(rbind, results)
+
+# Combine all results into one data frame
+combined_results <- bind_rows(results_data1, results_data2)
+
+# Drop the Coefficient column
+combined_results <- combined_results %>%
+  select(-Coefficient) %>%
+  mutate(Robust_SE = round(Robust_SE, 2))
+
+# Display the combined results
+print(combined_results)
+
+# Merge the data frames
+final_table <- combined_means_1 %>%
+  full_join(combined_means_0, by = "Variable") %>%
+  full_join(combined_results, by = "Variable")
+
+# View the final table
+print(final_table)
+
+# Creating the stargazer output
+stargazer(final_table, type = "text", title = "Combined Means and Robust Standard Errors",
+          summary = FALSE, 
+          out = "Output/table1_reproduction.tex")

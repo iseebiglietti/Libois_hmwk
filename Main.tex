@@ -1,0 +1,61 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{titling}
+\usepackage{fancyhdr}
+\usepackage{lipsum}
+\usepackage{parskip}
+\usepackage{forest}
+\usepackage{tikz}
+\usepackage{stmaryrd}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{alphalph}
+\usepackage{cancel}
+\usepackage{textgreek}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{dsfont}
+\usepackage{caption}
+\usepackage{cancel}
+
+\geometry{top=4cm, bottom=4cm, left=4cm, right=4cm}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Pierre Pili $\cdot$ Marie Gardie $\cdot$ Isée Biglietti}
+\lhead{Macroeconomics 2}
+\cfoot{\thepage}
+\setlength{\headheight}{14.49998pt}
+\addtolength{\topmargin}{-2.49998pt}
+
+\titleformat{\section}{\small\bfseries}{\thesection}{1em}{}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\arabic{section}.\arabic{subsection}.\alph{subsubsection}}
+
+\title{Homework 4: Financial friction and credit rationing}
+\author{PILI Pierre $\cdot$ GARDIE Marie $\cdot$ BIGLIETTI Isée}
+\date{\today}
+
+\titleformat{\subsection}[hang]
+  {\normalfont\small\bfseries}
+  {\thesubsection}
+  {1em}
+  {}
+\renewcommand{\thesubsection}{\roman{subsection}}
+\setlist[enumerate,1]{label=\textbf{\arabic*}.}
+  
+\begin{document}
+\maketitle
+
+
+\input{Output/table1_reproduction.tex}
+
+
+
+
+
+\end{document}
