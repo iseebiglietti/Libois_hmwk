@@ -27,6 +27,9 @@ vars2 <- c("poverty", "literacyrate", "populationsize", "populationdensity",
                       "fractionsc", "permanenthouse", "pervilelec", 
                       "pervilroad", "pervilhealth", "pervilschool", "ger")
 
+
+
+## Column of mean for Landlord areas
 # Calculate means for data1 and data2 where op == 1
 means_data1_1 <- data1 %>%
   filter(op == 1) %>%
@@ -53,7 +56,10 @@ combined_means_1 <- combined_means_1 %>%
 # View the combined means
 print(combined_means_1)
 
-# Calculate means for data1 and data2 where op == 1
+
+
+## Column of mean for Non-Landlord areas
+# Calculate means for data1 and data2 where op == 0
 means_data1_0 <- data1 %>%
   filter(op == 0) %>%
   select(all_of(vars1)) %>%
@@ -79,6 +85,9 @@ combined_means_0 <- combined_means_0 %>%
 # View the combined means
 print(combined_means_0)
 
+
+
+## Column for Robust Standard Errors
 # Initialize lists to store results
 results <- list()
 
@@ -86,11 +95,9 @@ results <- list()
 for (var in vars1) {
   model <- lm(as.formula(paste(var, "~ op")), data = data1)
   robust_result <- coeftest(model, vcov = vcovHC(model, type = "HC1"))
-  
-  # Store the coefficient and its robust standard error
+  # Store the robust standard error
   results[[var]] <- data.frame(Variable = var,
-                                Coefficient = robust_result[2, 1],  # op coefficient
-                                Robust_SE = robust_result[2, 2])     # op robust SE
+                                Robust_SE = robust_result[2, 2])
 }
 
 # Combine results for vars1
@@ -103,11 +110,9 @@ results <- list()
 for (var in vars2) {
   model <- lm(as.formula(paste(var, "~ op")), data = data2)
   robust_result <- coeftest(model, vcov = vcovHC(model, type = "HC1"))
-  
-  # Store the coefficient and its robust standard error
+  # Store the robust standard error
   results[[var]] <- data.frame(Variable = var,
-                                Coefficient = robust_result[2, 1],  # op coefficient
-                                Robust_SE = robust_result[2, 2])     # op robust SE
+                                Robust_SE = robust_result[2, 2])
 }
 
 # Combine results for vars2
@@ -118,11 +123,13 @@ combined_results <- bind_rows(results_data1, results_data2)
 
 # Drop the Coefficient column
 combined_results <- combined_results %>%
-  select(-Coefficient) %>%
   mutate(Robust_SE = round(Robust_SE, 2))
 
 # Display the combined results
 print(combined_results)
+
+
+
 
 # Merge the data frames
 final_table <- combined_means_1 %>%
@@ -132,7 +139,19 @@ final_table <- combined_means_1 %>%
 # View the final table
 print(final_table)
 
+
+
+## Compute the full table
 # Creating the stargazer output
 stargazer(final_table, type = "text", title = "Combined Means and Robust Standard Errors",
           summary = FALSE, 
           out = "Output/table1_reproduction.tex")
+
+
+
+# Clear
+rm()
+
+
+
+###### --> RESTE À MODIFIER LE NOM DES VARIABLES ET LE NOM DES COLUMNS (ET LES PTITS TRUCS QUI RESTENT SI ON VEUT)
