@@ -51,11 +51,11 @@ models_table7 <- list(model3, model4, model7, model8, model11)
 
 # Compute clustered standard errors by district for each model in Tables 6 and 7
 se_table6 <- lapply(models_table6, function(model) {
-  sqrt(diag(vcovCL(model, cluster = ~district)))
+  sqrt(diag(vcovCL(model, cluster = ~districtid)))
 })
 
 se_table7 <- lapply(models_table7, function(model) {
-  sqrt(diag(vcovCL(model, cluster = ~district)))
+  sqrt(diag(vcovCL(model, cluster = ~districtid)))
 })
 
 # Conduct linear hypothesis tests and capture results for Table 6 and Table 7
@@ -79,24 +79,26 @@ hypotheses_table7 <- list(
 
 # Display Table 6 using stargazer
 stargazer(models_table6,
-          type = "text",
+          type = "html",
           se = se_table6,
           dep.var.labels = c("Teacher Attendance", "Teacher Activity", "Student Scores", "Student Attendance", "Scholarship Receipt", "Infrastructure Index"),
           covariate.labels = c("Historical Control Variables", "Oudh and Landlord District Interactions", "Permanent Landlord District Effects"),
           omit.stat = c("f", "ser"),
           title = "Table 6: Historical Effects on Teacher, Student, Scholarship, and Infrastructure Outcomes",
-          align = TRUE
+          align = TRUE,
+          out = "Output/table6_reproduction.html"
 )
 
 # Display Table 7 using stargazer
 stargazer(models_table7,
-          type = "text",
+          type = "html",
           se = se_table7,
           dep.var.labels = c("Teacher Attendance", "Teacher Activity", "Student Scores", "Student Attendance", "Infrastructure Index"),
           covariate.labels = c("Historical Control Variables", "Landlord/Oudh and Permanent Effects"),
           omit.stat = c("f", "ser"),
           title = "Table 7: Effects within Landlord Districts on Teacher, Student, and Infrastructure Outcomes",
-          align = TRUE
+          align = TRUE,
+          out = "Output/table7_reproduction.html"
 )
 
 ### --> PB AVEC DISTRICT (COMME D'HAB), + DANS LES HYPOTHESES : "Erreur dans linearHypothesis.lm(model3, "perm + 0.27*slopperm") : there are aliased coefficients in the model."

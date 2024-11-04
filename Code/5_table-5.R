@@ -22,8 +22,8 @@ model1 <- lm(tattendance ~ op + dms01 + dmts4 + lon + lat + alt + rain, data = d
 model2 <- lm(tactivity ~ op + dms01 + dmts4 + lon + lat + alt + rain, data = data_teacher)
 model3 <- lm(tattendance ~ frsc + frobc + totpop + op + density + dms01 + dmts4 + lon + lat + alt + rain, data = data_teacher)
 model4 <- lm(tactivity ~ frsc + frobc + totpop + op + density + dms01 + dmts4 + lon + lat + alt + rain, data = data_teacher)
-model5 <- lm(tattendance ~ tcaste + tcaste2 + tgen + edu + toenr + dissch + frsc + frobc + totpop + op + density + lit + index + elec + phone + gpdistro + dms01 + dmts4 + lon + lat + alt + rain, data = data_teacher)
-model6 <- lm(tactivity ~ tcaste + tcaste2 + tgen + edu + toenr + dissch + frsc + frobc + totpop + op + density + lit + index + elec + phone + gpdistro + dms01 + dmts4 + lon + lat + alt + rain, data = data_teacher)
+model5 <- lm(tattendance ~ tcaste + tcaste2 + tgen + edu + toenr + dissch + frsc + frobc + totpop + op + density + lit + index + elec + phone + gpdistroad + dms01 + dmts4 + lon + lat + alt + rain, data = data_teacher)
+model6 <- lm(tactivity ~ tcaste + tcaste2 + tgen + edu + toenr + dissch + frsc + frobc + totpop + op + density + lit + index + elec + phone + gpdistroad + dms01 + dmts4 + lon + lat + alt + rain, data = data_teacher)
 
 # Stipend received by SC students
 model7 <- lm(scholar ~ oudh + dms01 + dmts4 + lon + lat + alt + rain, data = data_stipend, subset = caste2 == 0)
@@ -33,15 +33,15 @@ model9 <- lm(scholar ~ oudh + frsc + frobc + density + totpop + lit + elec + pho
 # School Infrastructure Index regressions
 model10 <- lm(index ~ op + dms01 + dmts4 + lon + lat + alt + rain, data = data_infra)
 model11 <- lm(index ~ frsc + frobc + totpop + op + density + dms01 + dmts4 + lon + lat + alt + rain, data = data_infra)
-model12 <- lm(index ~ frsc + frobc + totpop + op + density + lit + elec + phone + gpdistro + dms01 + dmts4 + lon + lat + alt + rain, data = data_infra)
+model12 <- lm(index ~ frsc + frobc + totpop + op + density + lit + elec + phone + gpdistroad + dms01 + dmts4 + lon + lat + alt + rain, data = data_infra)
 
 # Student standardized score and attendance regressions
 model13 <- lm(meanscore ~ op + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
 model14 <- lm(studentattendance ~ op + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
 model15 <- lm(meanscore ~ frsc + frobc + totpop + op + density + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
 model16 <- lm(studentattendance ~ frsc + frobc + totpop + op + density + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
-model17 <- lm(meanscore ~ scaste + scaste2 + sgen + me2 + me3 + fe2 + fe3 + tepupr + frsc + frobc + totpop + op + density + elec + phone + gpdistro + index + lit + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
-model18 <- lm(studentattendance ~ scaste + scaste2 + sgen + me2 + me3 + fe2 + fe3 + tepupr + frsc + frobc + totpop + op + density + elec + phone + gpdistro + index + lit + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
+model17 <- lm(meanscore ~ scaste + scaste2 + sgen + me2 + me3 + fe2 + fe3 + tepupr + frsc + frobc + totpop + op + density + elec + phone + gpdistroad + index + lit + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
+model18 <- lm(studentattendance ~ scaste + scaste2 + sgen + me2 + me3 + fe2 + fe3 + tepupr + frsc + frobc + totpop + op + density + elec + phone + gpdistroad + index + lit + dms01 + dmts4 + lon + lat + alt + rain, data = data_score)
 
 # Collect all models into a list for stargazer
 models <- list(model1, model2, model3, model4, model5, model6,
@@ -51,12 +51,12 @@ models <- list(model1, model2, model3, model4, model5, model6,
 
 # Compute clustered standard errors by district for each model
 se_list <- lapply(models, function(model) {
-  sqrt(diag(vcovCL(model, cluster = ~district)))
+  sqrt(diag(vcovCL(model, cluster = ~districtid)))
 })
 
 # Display the table using stargazer
 stargazer(models,
-          type = "text",                 # Change to "html" or "latex" for other outputs
+          type = "html",                 # Change to "html" or "latex" for other outputs
           se = se_list,                  # Supply the list of clustered SEs
           dep.var.labels = c("Teacher Attendance", "Teacher Activity", "Stipend Received", "School Infrastructure", "Student Score", "Student Attendance"),
           column.labels = c("Soil/Climate", "Population", "GP Characteristics"),
@@ -68,6 +68,9 @@ stargazer(models,
           omit.stat = c("f", "ser"),     # Omit F-statistic and standard error of regression for cleaner look
           column.sep.width = "2pt",      # Adjust space between columns
           title = "Table 5: Impact of Landlord Districts on Teacher, Stipend, Infrastructure, and Student Outcomes",
-          align = TRUE                   # Center align the table
+          align = TRUE,                   # Center align the table
+          out = "Output/table5_reproduction.html"
 )
 ### --> PB AVEC DISTRICT LIGNE 54 + AVEC gpdistro DANS LES REGRESSIONS
+
+
