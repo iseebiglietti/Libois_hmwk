@@ -1,9 +1,4 @@
 #### Load packages ####
-library(tidyverse)
-library(stringi)
-library(stringr)
-library(ggplot2)
-library(ggthemes)
 library(haven)
 library(dplyr)
 library(lmtest)
@@ -14,62 +9,111 @@ library(stargazer)
 
 #### Code ####
 # Import datas
-data_table4 <- read_dta("Datas/table4.dta")
-data_healthcommittee <- read_dta("Datas/table4-health-committee.dta")
+table4 <- as.data.frame(read_dta("Datas/table4.dta"))
+hc <- as.data.frame(read_dta("Datas/table4-health-committee.dta"))
 
 
+# Functions
+generate_formula <- function(dependent_var, main_var, control_vars) {
+  as.formula(
+    paste(
+      dependent_var,
+      "~", main_var,
+      "+", paste(control_vars, collapse = " + ")
+    )
+  )
+}
 
+reg_table4 <- function(formula) {
+  model <- lm(formula, data = table4)
+  robust_se <- coeftest(model, vcov = vcovCL, cluster = ~districtid)
+  return(robust_se)
+}
 
-# Define all regression models for each outcome with appropriate controls
-# Models for Village Governance Metrics (Village Meetings, VEC, PTA)
+reg_hc <- function(formula) {
+  model <- lm(formula, data = hc)
+  robust_se <- coeftest(model, vcov = vcovCL, cluster = ~districtid)
+  return(robust_se)
+}
 
-# Model 1: Village Meetings
-model_village1 <- lm(gsmeet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain, data = data_table4)
-model_village2 <- lm(gsmeet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density, data = data_table4)
-model_village3 <- lm(gsmeet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density + elec + phone + gpdistroad + lit, data = data_table4)
-
-# Model 2: VEC Meetings
-model_vec1 <- lm(ssmeet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain, data = data_table4)
-model_vec2 <- lm(ssmeet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density, data = data_table4)
-model_vec3 <- lm(ssmeet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density + elec + phone + gpdistroad + lit, data = data_table4)
-
-# Model 3: PTA Meetings
-model_pta1 <- lm(ptameet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain, data = data_table4)
-model_pta2 <- lm(ptameet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density, data = data_table4)
-model_pta3 <- lm(ptameet ~ op + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density + elec + phone + gpdistroad + lit, data = data_table4)
-
-# Models for Health Committee Metrics (using data_healthcommittee dataset)
-model_health1 <- lm(healthcommittee ~ oudh + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain, data = data_healthcommittee)
-model_health2 <- lm(healthcommittee ~ oudh + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density, data = data_healthcommittee)
-model_health3 <- lm(healthcommittee ~ oudh + dms01 + dms02 + dms03 + dms04 + dmts1 + dmts2 + dmts3 + dmts4 + lon + lat + alt + rain + frsc + frobc + totpop + density + elec + phone + gpdistro + lit, data = data_healthcommittee)
-
-# List of all models for stargazer table
-models <- list(
-  model_village1, model_village2, model_village3,
-  model_vec1, model_vec2, model_vec3,
-  model_pta1, model_pta2, model_pta3,
-  model_health1, model_health2, model_health3
+basic_controls <- c(
+  "dms01", "dms02", "dms03", "dms04",
+  "dms05", "dms06", "dms07", "dms08",
+  "dms09", "dms10", "dms11", "dms12",
+  "dms13", "dms14", "dms15", "dms16",
+  "dms17", "dms18", "dms19", "dms20",
+  "dms21", "dmaq3", "dmaq2", "dmaq1",
+  "dmph4", "dmph5", "dmph6", "dmph7",
+  "dmph8", "dmts1", "dmts2", "dmts3",
+  "dmts4", "lon", "lat", "alt", "rain"
+)
+additional_controls_2 <- c("frsc", "frobc", "totpop", "density")
+additional_controls_3 <- c(
+  "frsc", "frobc", "totpop",
+  "density", "elec", "phone", "gpdistroad", "lit"
 )
 
-# Compute clustered standard errors by district for each model
-se_list <- lapply(models, function(model) {
-  sqrt(diag(vcovCL(model, cluster = ~districtid)))
-})
 
-# Display the table using stargazer
-stargazer(models,
-  type = "html", # Change to "html" or "latex" for other outputs
-  se = se_list, # Supply the list of clustered SEs
-  dep.var.labels = c("Village Meetings", "VEC Meetings", "PTA Meetings", "Health Committee Meetings"),
-  column.labels = c("Basic Controls", "GP Population Controls", "Other GP Characteristics"),
-  covariate.labels = c(
-    "Landlord District", "Longitude", "Latitude", "Altitude", "Rainfall",
-    "Total Population", "Density", "SC Population Fraction", "OBC Population Fraction",
-    "Electricity", "Phone Access", "Literacy Rate", "Distance to Road"
-  ),
-  omit.stat = c("f", "ser"), # Omit F-statistic and standard error of regression for cleaner look
-  column.sep.width = "2pt", # Adjust space between columns
-  title = "Table 4: Village Governance in Landlord and Nonlandlord Districts",
-  align = TRUE, # Center align the table
-  out = "Output/table4_reproduction.html"
+
+fgsmeet1 <- generate_formula("gsmeet", "op", basic_controls)
+fgsmeet2 <- generate_formula(
+  "gsmeet",
+  "op", c(basic_controls, additional_controls_2)
 )
+fgsmeet3 <- generate_formula(
+  "gsmeet", "op",
+  c(basic_controls, additional_controls_3)
+)
+
+fssmeet1 <- generate_formula("ssmeet", "op", basic_controls)
+fssmeet2 <- generate_formula(
+  "ssmeet",
+  "op", c(basic_controls, additional_controls_2)
+)
+fssmeet3 <- generate_formula(
+  "ssmeet", "op",
+  c(basic_controls, additional_controls_3)
+)
+
+fptameet1 <- generate_formula("ptameet", "op", basic_controls)
+fptameet2 <- generate_formula(
+  "ptameet",
+  "op", c(basic_controls, additional_controls_2)
+)
+fptameet3 <- generate_formula(
+  "ptameet", "op",
+  c(basic_controls, additional_controls_3)
+)
+
+
+
+gsmeet1 <- reg_table4(fgsmeet1)
+gsmeet2 <- reg_table4(fgsmeet2)
+gsmeet3 <- reg_table4(fgsmeet3)
+
+ssmeet1 <- reg_table4(fssmeet1)
+ssmeet2 <- reg_table4(fssmeet2)
+ssmeet3 <- reg_table4(fssmeet3)
+
+ptameet1 <- reg_table4(fptameet1)
+ptameet2 <- reg_table4(fptameet2)
+ptameet3 <- reg_table4(fptameet3)
+
+additional_controls_3 <- c(
+  "frsc", "frobc", "totpop",
+  "density", "elec", "phone", "gpdistro", "lit"
+)
+
+fhealthcommittee1 <- generate_formula("healthcommittee", "oudh", basic_controls)
+fhealthcommittee2 <- generate_formula(
+  "healthcommittee", "oudh",
+  c(basic_controls, additional_controls_2)
+)
+fhealthcommittee3 <- generate_formula(
+  "healthcommittee", "oudh",
+  c(basic_controls, additional_controls_3)
+)
+
+healthcommittee1 <- reg_hc(fhealthcommittee1)
+healthcommittee2 <- reg_hc(fhealthcommittee2)
+healthcommittee3 <- reg_hc(fhealthcommittee3)
