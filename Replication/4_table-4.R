@@ -6,6 +6,9 @@ library(sandwich)
 library(clubSandwich)
 library(stargazer)
 
+library(MASS)       # Pour LAD
+library(quantreg)   # Pour LAD
+library(robustbase) # Pour M-, S-, et MM-estimations
 
 #### Code ####
 # Import datas
@@ -34,6 +37,11 @@ reg_hc <- function(formula) {
   model <- lm(formula, data = hc)
   robust_se <- coeftest(model, vcov = vcovCL, cluster = ~districtid)
   return(robust_se)
+}
+
+reg_lad <- function(formula, data) {
+  model <- rq(formula, data = data, tau = 0.5) # tau = 0.5 pour la médiane
+  return(summary(model))
 }
 
 basic_controls <- c(
